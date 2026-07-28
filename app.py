@@ -10,17 +10,22 @@ import pytesseract as pyt
 import numpy as np
 from langchain.messages import SystemMessage, HumanMessage
 from langchain.agents import create_agent
+from PIL import image
 import tempfile
 
 # =========================FRONTEND==================
-st.title("AI RESUME GENERATOR")
+st.title("AI RESUME MAKER & JOB APPLY AGENT")
+st.image=("https://insights.manageengine.com/artificial-intelligence/what-are-ai-agents/")
 
 GOOGLE_API_KEY = st.sidebar.text_input("Google Api Key", type = 'password')
 GROQ_API_KEY = st.sidebar.text_input("GROQ Api Key", type = 'password')
 TAVILY_API_KEY = st.sidebar.text_input("TAVILY Api Key", type = 'password')
 
-if not GOOGLE_API_KEY:
-  st.warning("Provide Google API key")
+if not (GOOGLE_API_KEY) and not(GROQ_AAPI_KEY) Aand not(TAVILY_API_KEY)
+  st.warning("pass api key")
+  st.stop()
+else:
+  st.success("API KEYS LOADED")
 
 
 # ============= MODEL and AGENT CODE====================
@@ -34,6 +39,7 @@ def search_latest_news_jobs(query):
   from tavily import TavilyClient
   client = TavilyClient(api_key = TAVILY_API_KEY)
   return client.search(query)
+
 
 
 # Step 4: Model and Agent creation
@@ -93,6 +99,24 @@ and must show user input details
 System instructions: Only Give HTML code as output"""
 
 final_prompt = prompt + prompt_reader()
+FILE=st.sidebar.file_uploader(
+     "choose an image file",
+      type=["jpeg","jpg","png","png","webp"])
+ if FILE is not None:
+   try:
+     image=Image.open(FILE)
+     st.sidebar.image(image,
+                      caption="uploaded image",
+                      use_container_width=True)
+     if image.mode in("RGBA","P"):
+         image=image.convert("RGB")
+     base_name=os.path.splitext(FILE.name)[0]
+     save_path=f"{base_name}.jpg"
+     image.save(save_path,"JPEG")
+     st.sidebar.success(f"image successfully saved as'{save_path}'!")
+   except Exception as e:
+     st.error(f"error processing image:{e}")
+
 
 profile_url = "https://s7d1.scene7.com/is/image/wbcollab/India_PM_Narendra_Modi-2?qlt=75&resMode=sharp2"
 
