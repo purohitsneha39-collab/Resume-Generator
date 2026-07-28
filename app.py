@@ -21,7 +21,7 @@ GOOGLE_API_KEY = st.sidebar.text_input("Google Api Key", type = 'password')
 GROQ_API_KEY = st.sidebar.text_input("GROQ Api Key", type = 'password')
 TAVILY_API_KEY = st.sidebar.text_input("TAVILY Api Key", type = 'password')
 
-if not (GOOGLE_API_KEY) and not(GROQ_API_KEY) and not(TAVILY_API_KEY):
+if not (GOOGLE_API_KEY) and not(GROQ_API_KEY) and not(TAVILY_API_KEY)
   st.warning("pass api key")
   st.stop()
 else:
@@ -102,7 +102,7 @@ final_prompt = prompt + prompt_reader()
 FILE=st.sidebar.file_uploader(
      "choose an image file",
       type=["jpeg","jpg","png","png","webp"])
- if FILE is not None:
+if FILE is not None:
    try:
      image=Image.open(FILE)
      st.sidebar.image(image,
