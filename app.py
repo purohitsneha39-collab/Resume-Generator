@@ -13,6 +13,7 @@ from langchain.agents import create_agent
 from PIL import Image
 import base64
 
+st.set_page_config(layout="wide")
 # =========================FRONTEND==================
 st.title("AI RESUME MAKER & JOB APPLY AGENT")
 st.image=("https://bernardmarr.com/wp-content/uploads/2025/05/How-AI-Agents-Will-Revolutionize-Your-Day-To-Day-Life.jpg")
