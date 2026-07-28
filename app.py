@@ -15,7 +15,7 @@ import base64
 
 # =========================FRONTEND==================
 st.title("AI RESUME MAKER & JOB APPLY AGENT")
-st.image=("https://insights.manageengine.com/artificial-intelligence/what-are-ai-agents/")
+st.image=("https://bernardmarr.com/wp-content/uploads/2025/05/How-AI-Agents-Will-Revolutionize-Your-Day-To-Day-Life.jpg")
 
 GOOGLE_API_KEY = st.sidebar.text_input("Google Api Key", type = 'password')
 GROQ_API_KEY = st.sidebar.text_input("GROQ Api Key", type = 'password')
@@ -166,12 +166,12 @@ if st.button("Generate Resume"):
   
         
     
-    st.html(code, width="stretch", unsafe_allow_javascript=True)
+  st.html(code, width="stretch", unsafe_allow_javascript=True)
 #=========================APPLY LIVE JOBS
-    st.divider()
-    response = agent.invoke({'messages':[{'role':'user',"content":job_prompt}]})
-    code = response['messages'][-1].content[-1]['text']
-    st.html(job_code, width="stretch", unsafe_allow_javascript=True)
+  st.divider()
+  response = agent.invoke({'messages':[{'role':'user',"content":job_prompt}]})
+  code = response['messages'][-1].content[-1]['text']
+  st.html(job_code, width="stretch", unsafe_allow_javascript=True)
 
 
 
