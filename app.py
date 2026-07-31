@@ -28,7 +28,7 @@ elif all(ALL_API):
     google_api_key=GOOGLE_API_KEY
   )
   st.sidebar.success("API keys loades successfully")
-else:
+elif:
   st.sidebar.info("Must Pass all API keys")
 else:
   st.info("LOADED")
