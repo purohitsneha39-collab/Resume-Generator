@@ -1,183 +1,118 @@
-import streamlit as st
 import os
 import time
 import langchain
-from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.agents import create_agent
 from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
 from tavily import TavilyClient
 import pytesseract as pyt
 import numpy as np
-from langchain.messages import SystemMessage, HumanMessage
-from langchain.agents import create_agent
-from PIL import Image
-import base64
+import streamlit as st
 
-st.set_page_config(layout="wide")
-# =========================FRONTEND==================
-st.title("AI RESUME MAKER & JOB APPLY AGENT")
-st.image=("https://bernardmarr.com/wp-content/uploads/2025/05/How-AI-Agents-Will-Revolutionize-Your-Day-To-Day-Life.jpg")
+#================API-KEYS==================
+GOOGLE_API_KEY=st.sidebar.text_input("Google -API",type="password")
+GROQ_API_KEY=st.sidebar.text_input("Groq-API",type="password")
+TAVILY_API_KEY=st.sidebar.text_input("Tavily-API",type="password")
 
-GOOGLE_API_KEY = st.sidebar.text_input("Google Api Key", type = 'password')
-GROQ_API_KEY = st.sidebar.text_input("GROQ Api Key", type = 'password')
-TAVILY_API_KEY = st.sidebar.text_input("TAVILY Api Key", type = 'password')
+os.environ["GOOGLE_API_KEY"]=GOOGLE_API_KEY
+os.environ["GROQ_API_KEY"]=GROQ_API_KEY
+os.environ["TAVILY_API_KEY"]=TAVILY_API_KEY
 
-if not (GOOGLE_API_KEY) and not(GROQ_API_KEY) and not(TAVILY_API_KEY):
-  st.warning("pass api key")
-  st.stop()
+ALL_API=[GOOGLE_KEY,GROQ_KEY,TAVILY_API_KEY]
+if not all(ALL_API):
+  st.sidebar.info("Pass API keys")
+elif all(ALL_API):
+  # Step1:model call
+  model=ChatGoogleGenerativeAI(
+    model="gemini-3.5-flash-lite",
+    google_api_key=GOOGLE_API_KEY
+  )
+  st.sidebar.success("API keys loades successfully")
 else:
-  st.success("API KEYS LOADED")
+  st.sidebar.info("Must Pass all API keys")
+else:
+  st.info("LOADED")
 
+#================Frontend=================
+st.title("AI-Agent-Powered PPT Generator")
+user_query=st.text_area("Write your PPT topic or prompt:")
 
-# ============= MODEL and AGENT CODE====================
+#===================Assests=================
 # tool 1
-def search_latest_news_jobs(query):
-  """This function helps to get
-  latest news or latest jobs
-  related to user given query
-  using tavily"""
-
-  from tavily import TavilyClient
-  client = TavilyClient(api_key = TAVILY_API_KEY)
-  return client.search(query)
-
-
-
-# Step 4: Model and Agent creation
-model1 = ChatGoogleGenerativeAI(
-    model = "gemini-3.5-flash-lite",
-    google_api_key = GOOGLE_API_KEY
-)
-
-model2 = ChatGroq(
-    model = "qwen/qwen3.6-27b",
-    api_key = GROQ_API_KEY
-)
-
-
-#============Agent with tool==============
-agent = create_agent(
-    model = model1,   # can be model2 also,
-    tools = [search_latest_news_jobs]
-)
-
-
-# Let's Generate Prompt for Resume using model
-
-def prompt_generator():
-  prompt = """You are a helpful AI Resume
-  maker, I want you to use chain-of-thoughts
-  and give detailed prompt for model
-  where user want to generate resume
-  for fresher or experienced one
-  in HTML format, you have to give proper
-  set of instructions, and make sure to keep
-  design professional"""
-
-  response = model1.invoke(prompt)
-  prompt_ans = response.content[-1]['text']
-  # print(prompt_ans)
-
-  file_name = 'prompt.txt'
-  with open(file_name, 'w') as f:
-    f.write(prompt_ans)
-
-prompt_generator()
-
-
-# Final_Agent
-#Tool 2
-def prompt_reader():
-  with open('prompt.txt','r') as f:
-    prompt = f.read()
-  return prompt
-
-
-
-prompt = """you are a helpful ai assistant  with a job resume maker , your task is to give html gormat resume ,with a proper designing using recent html js css code , with professional degsine format , user will upload data and return html format resume make it diffrent colour scheme andthe resume should project m skill set  also make it look like professional , create side margins table also make the text gradient for heddings like professional summary
-IMPORTANT: wherever the profile photo goes in the resume, output exactly this tag and nothing else:
-<img src="PROFILE_IMAGE_PLACEHOLDER" style="width:100px;height:100px;border-radius:50%;">
-do not draw or generate any other image tag or placeholder circle yourself"""
-
-final_prompt = prompt + prompt_reader()
-FILE=st.sidebar.file_uploader(
-     "choose an image file",
-      type=["jpeg","jpg","png","png","webp"])
-if FILE is not None:
-   try:
-     image=Image.open(FILE)
-     st.sidebar.image(image,
-                      caption="uploaded image",
-                      use_container_width=True)
-     if image.mode in("RGBA","P"):
-         image=image.convert("RGB")
-     base_name=os.path.splitext(FILE.name)[0]
-     save_path=f"{base_name}.jpg"
-     image.save(save_path,"JPEG")
-     st.sidebar.success(f"image successfully saved as'{save_path}'!")
-   except Exception as e:
-     st.error(f"error processing image:{e}")
-
-
-profile_url = "https://s7d1.scene7.com/is/image/wbcollab/India_PM_Narendra_Modi-2?qlt=75&resMode=sharp2"
-
-# Change this when required new resume by user, pass details
-
-user_info = st.text_area("Give your information: ")
-
-
-user_query = f"""user details:given below:
-resume info{USER_INFO}
-DEFAULT IF NOT GIVEN:PYTHON DEVELOPER RESUME"""
-
-final_query = final_prompt + user_query
-
-OPTIONS = ["DELHI","NOIDA","GURGAON/GURUGRAM",
-          'KANPUR','LUCKNOW','BANGLORE','PUNE']
-           
-LOCATION = st.sidebar.multiselect('SELECT LOCATION: ',
-                                    options = OPTIONS )
-
-JOB_PROFILE = ["PYTHON DEVELOPER",'GEN AI',
-                'FULL-STACK DEVELOPER','DATA ANALYST']
-
-PROFILE = st.sidebar.multiselect("SELECT JOB ROLE",
-                options = JOB_PROFILE)
-
-
-job_prompt = f"""Based on {PROFILE} jobs in {LOCATION}, I 
-want latest job news in using tavily, 
-try top 10 search or whatever available
-and give result like naukri theme design with
-job name, job desc, salary,
-apply link and OUTPUT must be In HTML no markdowns"""
-
-if st.button("Generate Resume"):
-  with st.spinner("Agent creating Resume..."):
-    response = agent.invoke({'messages':[{'role':'user',"content":final_query}]})
-    code = response['messages'][-1].content[-1]['text']
-
-
+def search_latest_info(query):
+  """This function search latest news or content from website using tavily,helpful to check trending content"""
+  client= TavilyClient(api_key=TAVILY_API_KEY)
+  response=client.search(query)
+  return response
   
-  if FILE is not None:
-     with open(save_path,"rb") as img_file:
-          b64_image =  base64.b64encode(img_file.read()).decode()
-  data_uri = "data:image/jpeg;base64,{b64_image}"
-  code=code.rplace("PROFILE_IMAGE_PLACEHOLDER",data_uri)
+# tool_2
+def generate_image(img_prompt):
+  """This function ,helps to generate image using free api, with given img_prompt using pllinations"""
+  url=f"https://image.pollinations.ai/{img_prompt}"
+  # file handling
+  import requests as r
+  content =r.get(url).content
+  with open(f"Image.jpeg",'wb') as f:
+    f.write(content)
+  from PIL import Image
+  return Image.open("Image.jpeg")
   
-        
-    
-  st.html(code, width="stretch", unsafe_allow_javascript=True)
-#=========================APPLY LIVE JOBS
-  st.divider()
-  response = agent.invoke({'messages':[{'role':'user',"content":job_prompt}]})
+# with tabs
+tab1,tab2,tab3,=st.tabs(["Generate Image",
+                         "Check latest news",
+                         "Generate PPT"])
+# detailed prompt generator
+def prompt_generate(model,query):
+  prompt=f"""Your task is to give detailed prompt instructions for given.
+  prompt:
+  You are a Professional PPT generatos, where user will give the query and based on that,
+  you have to generate dynamic,HTML output based ppt with advanced CSS and Dynamic UI and UX with PPT toggle
+  button , Based on query take image reference to generate and embed the same in ppt,using
+  Image ref:url=https://images.unsplash.com/photo,
+  or url= https://image.pollinations.ai/, 
+  make sure img src must be valid, and image must be
+  present inside html, Generate
+  with image caption, and no markdowns
+  user query given below:{query}"""
+  response =model.invoke(prompt)
+  final_prompt=response.content[-1]['text']
+  with open("ppt_prompt.txt",'w') as f:
+    f.write(final_prompt)
+  return final_prompt
+if all(ALL_API) and user_query:
+  agent=create_agent(
+    model=model,
+    tools=[search_latest_info,generate_image]
+  )  
+
+#=================Display Agent==============
+  st.sidebar.image(agent)
+
+#============With Tabs===============
+  with tab1:
+    st.header("Generate Image give prompt")
+    if st.button("Click to generate:",key="generate_img_button"):
+      with st.spinner("Running Agent.."):
+        data = f"https://image.pollinations.ai/{user_query}"
+        time.sleep(3)
+        st.image(data)
+  with tab2:
+    st.header("Check latest news")
+    if st.button("Fetch news:",key="new_button"):
+      with st.spinner("Running Agent.."):
+        prompt =""" Give latest news India or world news related to tech,business,jobs, or user request
+        output in proper HTML news templates"""+user_query
+        response = agent.invoke({'messages':[{'role':"user",
+                                 "content":final_prompt}]})
   code = response['messages'][-1].content[-1]['text']
-  st.html(job_code, width="stretch", unsafe_allow_javascript=True)
-
-
-
-
-
-
-
-
+  st.html(code,width="stretch",unsafe_allow_javascript=True)
+  with tab3:
+    st.header("Create PPT")
+    if st.button("Click to generate:",key="generate_img_button"):
+      with st.spinner("Running Agent.."):
+        final_prompt=prompt_generate(model,user_query)
+        response = agent.invoke({'messages':[{'role':"user","content":final_prompt}]})
+        code = response['messages'][-1].content[-1]['text']
+        st.html(code,width="stretch",unsafe_allow_javascript=True)
+       if st.download_button(label="DOWNLOAD PPT",data=code,file_name="ppt.html",mine='text/html')
+          st.success("PPT Download Successfilly!!")
