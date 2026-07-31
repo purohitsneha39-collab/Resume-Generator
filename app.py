@@ -1,3 +1,4 @@
+# ===============load module===========
 import os
 import time
 import langchain
@@ -9,110 +10,155 @@ import pytesseract as pyt
 import numpy as np
 import streamlit as st
 
-#================API-KEYS==================
+
+
+
+
+#====================API-keys======================
 GOOGLE_API_KEY=st.sidebar.text_input("Google -API",type="password")
 GROQ_API_KEY=st.sidebar.text_input("Groq-API",type="password")
-TAVILY_API_KEY=st.sidebar.text_input("Tavily-API",type="password")
+TAVILY_API_KEY=st.sidebar.text_input("Tavily -API",type="password")
+
 
 os.environ["GOOGLE_API_KEY"]=GOOGLE_API_KEY
 os.environ["GROQ_API_KEY"]=GROQ_API_KEY
 os.environ["TAVILY_API_KEY"]=TAVILY_API_KEY
 
-ALL_API=[GOOGLE_KEY,GROQ_KEY,TAVILY_API_KEY]
+
+ALL_API=[GOOGLE_API_KEY,GROQ_API_KEY,TAVILY_API_KEY]
 if not all(ALL_API):
-  st.sidebar.info("Pass API keys")
+  st.sidebar.error("PASS API-KEYS")
+  
 elif all(ALL_API):
-  # Step1:model call
-  model=ChatGoogleGenerativeAI(
-    model="gemini-3.5-flash-lite",
-    google_api_key=GOOGLE_API_KEY
-  )
-  st.sidebar.success("API keys loades successfully")
-elif:
-  st.sidebar.info("Must Pass all API keys")
+  model=ChatGoogleGenerativeAI(model="gemini-3.5-flash-lite",
+                              google_api_key=GOOGLE_API_KEY) 
+  st.sidebar.success("API KEYS LOADED SUCCESSFULLY")                           )
+  
+elif any(ALL_API):
+  st.sidebar.info("api keys loaded successfully")
+  
 else:
   st.info("LOADED")
+   
+  
+  
 
-#================Frontend=================
-st.title("AI-Agent-Powered PPT Generator")
+#===================frontend===================
+st.title("AI AGENT-POWERED PPT GENERATOR")
+
 user_query=st.text_area("Write your PPT topic or prompt:")
 
-#===================Assests=================
-# tool 1
+#==========================ASSESTS======================
+
+# TOOL 1
 def search_latest_info(query):
-  """This function search latest news or content from website using tavily,helpful to check trending content"""
-  client= TavilyClient(api_key=TAVILY_API_KEY)
+  """ this function serch latest news or info using tavily,helpful to check treding content"""
+  client=TavilyClient(TAVILY_API_KEY)
   response=client.search(query)
   return response
-  
-# tool_2
+
+
+# TOOL 2
 def generate_image(img_prompt):
-  """This function ,helps to generate image using free api, with given img_prompt using pllinations"""
+  """this function ,helps to generate image using free api,with given given img_prompt using pollinations"""
   url=f"https://image.pollinations.ai/{img_prompt}"
-  # file handling
+  #file handling
   import requests as r
-  content =r.get(url).content
-  with open(f"Image.jpeg",'wb') as f:
+  content=r.get(url).content
+  with open(f"Image.jpeg","wb") as f:
     f.write(content)
+
   from PIL import Image
-  return Image.open("Image.jpeg")
-  
-# with tabs
-tab1,tab2,tab3,=st.tabs(["Generate Image",
-                         "Check latest news",
-                         "Generate PPT"])
+  return url
+
+
+
+# WITH TABS
+tab1,tab2,tab3=st.tabs(["GENERATE IMAGE",
+                        "CHECK LATEST NEWS",
+                       "GENERATE PPT"])
+
+
+
+
+# tool 3:
 # detailed prompt generator
-def prompt_generate(model,query):
-  prompt=f"""Your task is to give detailed prompt instructions for given.
+def prompt_generator(model,query):
+  prompt=f""",
+  your task is to give detailed prompt instructions for given.
   prompt:
-  You are a Professional PPT generatos, where user will give the query and based on that,
-  you have to generate dynamic,HTML output based ppt with advanced CSS and Dynamic UI and UX with PPT toggle
-  button , Based on query take image reference to generate and embed the same in ppt,using
-  Image ref:url=https://images.unsplash.com/photo,
-  or url= https://image.pollinations.ai/, 
+
+  you are a proffesional ppt genertaor ,
+  where user will give the query and based on that
+  you have to generate dynamic ,
+  html output based ppt with advanced css and dynamic UI and UX with PPT Toggle button,
+  based on query take image reference to gewnerate and embed the same in ppt using
+  Image ref: url = https://images.unsplash.com/photo, 
+  or url = https://image.pollinations.ai/, 
   make sure img src must be valid, and image must be
   present inside html, Generate
-  with image caption, and no markdowns
-  user query given below:{query}"""
-  response =model.invoke(prompt)
-  final_prompt=response.content[-1]['text']
-  with open("ppt_prompt.txt",'w') as f:
-    f.write(final_prompt)
+  with image caption,and no markdowns user query given below:{query}"""
+
+  response=model.invoke(prompt)
+  final_prompt=response.content[-1]["text"]
+
+  file_name="ppt_prompt.txt"
+  with open(file_name,"w") as file:
+    file.write(final_prompt)
   return final_prompt
+
 if all(ALL_API) and user_query:
   agent=create_agent(
-    model=model,
-    tools=[search_latest_info,generate_image]
-  )  
+      model=model,
+      tools=[search_latest_info,
+              generate_image
+             ]
+  )
+  
+  
+  
+  #====================DISPLAY AGENT===============
+  # st.sidebar.image(agent)
 
-#=================Display Agent==============
-  st.sidebar.image(agent)
 
-#============With Tabs===============
+  # ================with TABS===============
   with tab1:
-    st.header("Generate Image give prompt")
-    if st.button("Click to generate:",key="generate_img_button"):
-      with st.spinner("Running Agent.."):
+    st.header("GENERATE IMAGE GIVE PROMPT")
+    if st.button("click to generate:",key="generate_img_button"):
+      with st.spinner("Running agent........."):
         data = f"https://image.pollinations.ai/{user_query}"
         time.sleep(3)
         st.image(data)
+        
+
   with tab2:
-    st.header("Check latest news")
-    if st.button("Fetch news:",key="new_button"):
-      with st.spinner("Running Agent.."):
-        prompt =""" Give latest news India or world news related to tech,business,jobs, or user request
-        output in proper HTML news templates"""+user_query
-        response = agent.invoke({'messages':[{'role':"user",
-                                 "content":final_prompt}]})
-  code = response['messages'][-1].content[-1]['text']
-  st.html(code,width="stretch",unsafe_allow_javascript=True)
+    st.header("CHECK LATEST NEWS")
+    if st.button("Fetch news:",key="news_button"):
+      with st.spinner("Running agent........."):
+        prompt=""" give latest news india or world news
+        related to tech ,bussiness jobs,or user requested output
+        in proper HTML news templates"""+ user_query
+        response=agent.invoke({"messages":[{"role":"user",
+                                    "content": final_prompt}]})
+        code=response["messages"][-1].content[-1]["text"]
+
+        st.html(code,width="stretch",
+                unsafe_allow_javascript=True)
+  
   with tab3:
-    st.header("Create PPT")
-    if st.button("Click to generate:",key="generate_img_button"):
-      with st.spinner("Running Agent.."):
-        final_prompt=prompt_generate(model,user_query)
-        response = agent.invoke({'messages':[{'role':"user","content":final_prompt}]})
-        code = response['messages'][-1].content[-1]['text']
-        st.html(code,width="stretch",unsafe_allow_javascript=True)
-        if st.download_button(label="DOWNLOAD PPT",data=code,file_name="ppt.html",mine='text/html')
-           st.success("PPT Download Successfilly!!")
+    st.header("CREATE PPT")
+    if st.button("click to generate:",key="generate_ppt_button"):
+      with st.spinner("Running agent........."):
+        final_prompt=prompt_generator(model,user_query)
+        response=agent.invoke({"messages":[{"role":"user",
+                                    "content": final_prompt}]})
+        code=response["messages"][-1].content[-1]["text"]
+
+        st.html(code,width="stretch",
+                unsafe_allow_javascript=True)
+        if st.download_button(
+                          label="DOWNLOAD PPT",
+                          data=code,
+                          file_name="ppt.html",
+                          mime="text/html"):
+          st.success("PPT DOWNLOADED SUCCESSFULLY!!")
