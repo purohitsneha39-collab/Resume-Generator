@@ -114,5 +114,5 @@ if all(ALL_API) and user_query:
         response = agent.invoke({'messages':[{'role':"user","content":final_prompt}]})
         code = response['messages'][-1].content[-1]['text']
         st.html(code,width="stretch",unsafe_allow_javascript=True)
-       if st.download_button(label="DOWNLOAD PPT",data=code,file_name="ppt.html",mine='text/html')
-          st.success("PPT Download Successfilly!!")
+        if st.download_button(label="DOWNLOAD PPT",data=code,file_name="ppt.html",mine='text/html')
+           st.success("PPT Download Successfilly!!")
